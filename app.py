@@ -1,3 +1,4 @@
+from fastapi.responses import FileResponse
 import os
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -104,3 +105,6 @@ async def generate_exam_endpoint(
     except Exception as e:
         print("[❌] خطأ داخلي:", str(e))
         raise HTTPException(status_code=500, detail=f"حدث خطأ في النظام الداخلي: {str(e)}")
+        @app.get("/")
+async def serve_frontend():
+    return FileResponse("index.html")
