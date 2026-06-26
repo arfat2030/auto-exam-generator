@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة اختبارك الذكية | AI Interactive Exam 🚀</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 50%, #020617 100%);
+        }
+        .glow-orb {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 pb-24 antialiased relative overflow-x-hidden">
+
+    <div class="glow-orb"></div>
+
+    <header class="container mx-auto px-6 py-10 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+        <div class="flex items-center gap-4 text-center md:text-right">
+            <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-indigo-400/30 transform rotate-3 hover:rotate-0 transition-transform">
+                🧠
+            </div>
+            <div>
+                <h1 class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300 tracking-tight">EXAM.AI</h1>
+                <p class="text-xs text-indigo-400 font-bold tracking-widest uppercase mt-1">نظام الاختبارات التفاعلية الفورية بالذكاء الاصطناعي</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-4xl relative z-10">
+        
+        <div id="controlCard" class="bg-slate-900/60 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-800 p-8 md:p-10 transition-all duration-500">
+            <h2 class="text-lg font-extrabold text-white mb-8 flex items-center gap-3 border-b pb-4 border-slate-800">
+                <span class="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">⚡</span> تهيئة الاختبار التفاعلي الجديد
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <label class="text-xs font-black text-slate-400 tracking-wider">🌐 لغة الاختبار</label>
+                    <select id="language" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ar" selected>العربية (Arabic)</option>
+                        <option value="en">English (الإنجليزية)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-black text-slate-400 tracking-wider">📊 مستوى الصعوبة والتحدي</label>
+                    <select id="difficulty" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="سهل ومباشر">سهل / مباشر</option>
+                        <option value="متوسط وقائم على الفهم" selected>متوسط / تحليلي</option>
+                        <option value="صعب ومتقدم يقيس التفكير النقدي">صعب / تفكير نقدي</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-black text-slate-400 tracking-wider">📁 مستند المنهج (PDF / Word)</label>
+                    <div class="relative bg-slate-950/80 border-2 border-dashed border-slate-800 rounded-2xl p-2">
+                        <input type="file" id="fileInput" accept=".pdf,.docx" class="w-full text-xs text-slate-400 file:py-1.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-indigo-500 file:text-white cursor-pointer"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <label class="block text-xs font-black text-slate-400 tracking-wider mb-4">🔢 كوتا وهيكلية الأسئلة</label>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800 text-center">
+                        <span class="text-xs font-bold text-slate-400 block mb-2">خيارات متعددة</span>
+                        <input type="number" id="numMcq" value="3" min="0" class="w-12 text-center font-black text-lg bg-slate-950 border border-slate-800 rounded-xl py-1 text-indigo-400 focus:outline-none" />
+                    </div>
+                    <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800 text-center">
+                        <span class="text-xs font-bold text-slate-400 block mb-2">صح أم خطأ</span>
+                        <input type="number" id="numTf" value="3" min="0" class="w-12 text-center font-black text-lg bg-slate-950 border border-slate-800 rounded-xl py-1 text-indigo-400 focus:outline-none" />
+                    </div>
+                    <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800 text-center">
+                        <span class="text-xs font-bold text-slate-400 block mb-2">أسئلة مقالية</span>
+                        <input type="number" id="numEssay" value="1" min="0" class="w-12 text-center font-black text-lg bg-slate-950 border border-slate-800 rounded-xl py-1 text-indigo-400 focus:outline-none" />
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="uploadAndGenerate()" class="w-full bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-400 hover:to-pink-500 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-500/20 cursor-pointer transition-all duration-300 transform hover:-translate-y-1">
+                🚀 توليد وبدء الاختبار المباشر
+            </button>
+            
+            <div id="loading" class="hidden mt-8 text-center p-6 bg-indigo-950/30 rounded-2xl border border-indigo-800/30">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-3 border-indigo-400 border-b-transparent mb-3"></div>
+                <p class="text-indigo-300 font-bold text-sm animate-pulse">جاري صياغة بيئة الاختبار التفاعلية...</p>
+            </div>
+        </div>
+
+        <div id="examPaper" class="hidden bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-slate-900 border border-slate-200 mt-12 transition-all duration-700">
+            <div id="examHeader" class="text-center border-b-4 border-double border-slate-800 pb-6 mb-10"></div>
+            
+            <div id="questionsContainer" class="space-y-12"></div>
+
+            <div class="border-t-2 border-slate-100 pt-8 mt-12 flex flex-col items-center gap-6">
+                <button onclick="checkAnswers()" id="submitExamBtn" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black px-10 py-4 rounded-2xl shadow-lg cursor-pointer transition-all transform hover:-translate-y-0.5 text-lg">
+                    📊 تحقق من إجاباتك واحسب النتيجة
+                </button>
+                
+                <div id="resultBanner" class="hidden w-full text-center p-6 rounded-2xl font-black text-2xl transition-all duration-500"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // متغير عالمي لحفظ بيانات الأسئلة والإجابات الصحيحة القادمة من السيرفر
+        let currentExamData = null;
+
+        async function uploadAndGenerate() {
+            const fileInput = document.getElementById('fileInput');
+            const language = document.getElementById('language').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const numMcq = document.getElementById('numMcq').value;
+            const numTf = document.getElementById('numTf').value;
+            const numEssay = document.getElementById('numEssay').value;
+
+            const loading = document.getElementById('loading');
+            const examPaper = document.getElementById('examPaper');
+            const examHeader = document.getElementById('examHeader');
+            const questionsContainer = document.getElementById('questionsContainer');
+            const resultBanner = document.getElementById('resultBanner');
+
+            if (!fileInput.files[0]) {
+                alert(language === 'ar' ? 'الرجاء اختيار ملف المنهج أولاً!' : 'Please select a file first!');
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            examPaper.classList.add('hidden');
+            resultBanner.classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('difficulty', difficulty);
+            formData.append('num_mcq', numMcq);
+            formData.append('num_tf', numTf);
+            formData.append('num_essay', numEssay);
+            formData.append('language', language);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/generate-exam', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Error');
+
+                const data = await response.json();
+                currentExamData = data; // تخزين البيانات للتحقق لاحقاً
+                questionsContainer.innerHTML = '';
+
+                // ضبط اللغة والترويسية
+                if (language === 'en') {
+                    examPaper.setAttribute('dir', 'ltr');
+                    examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-left";
+                    examHeader.innerHTML = `<h2 class="text-3xl font-black text-slate-900 tracking-tight">Interactive Online Test</h2><p class="text-xs text-slate-500 mt-2">Select your answers below and click verify.</p>`;
+                } else {
+                    examPaper.setAttribute('dir', 'rtl');
+                    examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-right";
+                    examHeader.innerHTML = `<h2 class="text-3xl font-black text-slate-900 tracking-tight">الاختبار الإلكتروني التفاعلي</h2><p class="text-xs text-slate-500 mt-2">أجب عن الأسئلة بالضغط على الخيارات ثم اضغط على زر التحقق بالأسفل.</p>`;
+                }
+
+                // 1. حقن أسئلة الاختيار من متعدد براديو بوتون تفاعلي
+                if (data.multiple_choice && data.multiple_choice.length > 0) {
+                    let title = language === 'en' ? `Section 1: Multiple Choice Questions` : `القسم الأول: أسئلة الاختيار من متعدد`;
+                    let mcqHTML = `<div class="mb-4"><h3 class="text-lg font-black pb-2 mb-5 text-indigo-700 border-b-2 border-slate-100">📌 ${title}</h3><div class="space-y-6">`;
+                    
+                    data.multiple_choice.forEach((q, qIndex) => {
+                        mcqHTML += `
+                            <div class="q-block-mcq">
+                                <p class="font-bold text-slate-800 leading-relaxed">${qIndex + 1}. ${q.question}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 ${language === 'ar' ? 'mr-6' : 'ml-6'} text-sm text-slate-600 max-w-3xl">
+                                    ${q.options.map((opt, optIndex) => `
+                                        <label class="flex items-center gap-3 bg-slate-50 hover:bg-indigo-50 border border-slate-200 p-3.5 rounded-2xl cursor-pointer transition-all font-semibold text-slate-700">
+                                            <input type="radio" name="mcq-${qIndex}" value="${opt}" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                                            <span>${opt}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                    });
+                    mcqHTML += `</div></div>`;
+                    questionsContainer.innerHTML += mcqHTML;
+                }
+
+                // 2. حقن أسئلة صح أو خطأ تفاعلية
+                if (data.true_false && data.true_false.length > 0) {
+                    let title = language === 'en' ? `Section 2: True or False Questions` : `القسم الثاني: أسئلة صح أم خطأ`;
+                    let tfHTML = `<div class="mb-4"><h3 class="text-lg font-bold pb-2 mb-5 text-indigo-700 border-b-2 border-slate-100">📌 ${title}</h3><div class="space-y-6">`;
+                    
+                    data.true_false.forEach((q, qIndex) => {
+                        tfHTML += `
+                            <div class="q-block-tf">
+                                <p class="font-bold text-slate-800 leading-relaxed">${qIndex + 1}. ${q.question}</p>
+                                <div class="flex gap-4 mt-3 ${language === 'ar' ? 'mr-6' : 'ml-6'} text-sm">
+                                    <label class="flex items-center gap-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 px-6 py-3 rounded-xl cursor-pointer transition-all font-bold text-slate-700">
+                                        <input type="radio" name="tf-${qIndex}" value="true" class="w-4 h-4 text-emerald-600">
+                                        <span>${language === 'en' ? 'True (✔)' : 'عبارة صحيحة (✔)'}</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 bg-slate-50 hover:bg-rose-50 border border-slate-200 px-6 py-3 rounded-xl cursor-pointer transition-all font-bold text-slate-700">
+                                        <input type="radio" name="tf-${qIndex}" value="false" class="w-4 h-4 text-rose-600">
+                                        <span>${language === 'en' ? 'False (✘)' : 'عبارة خاطئة (✘)'}</span>
+                                    </label>
+                                </div>
+                            </div>`;
+                    });
+                    tfHTML += `</div></div>`;
+                    questionsContainer.innerHTML += tfHTML;
+                }
+
+                // 3. قسم الأسئلة المقالية (للقراءة والكتابة فقط لأنها تحتاج مصلح بشري)
+                if (data.essay && data.essay.length > 0) {
+                    let title = language === 'en' ? `Section 3: Short Essay Questions (Self-Evaluation)` : `القسم الثالث: الأسئلة المقالية (تقييم ذاتي)`;
+                    let essayHTML = `<div class="mb-4"><h3 class="text-lg font-bold pb-2 mb-5 text-indigo-700 border-b-2 border-slate-100">📌 ${title}</h3><ol class="list-decimal list-inside space-y-6">`;
+                    data.essay.forEach((q) => {
+                        essayHTML += `
+                            <li class="font-bold text-slate-800 leading-relaxed">${q.question}
+                                <textarea class="w-full mt-3 p-4 border border-slate-200 rounded-2xl bg-slate-50 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="${language === 'en' ? 'Type your answer here...' : 'اكتب إجابتك هنا للتدرب...'}" id="text"></textarea>
+                            </li>`;
+                    });
+                    essayHTML += `</ol></div>`;
+                    questionsContainer.innerHTML += essayHTML;
+                }
+
+                loading.classList.add('hidden');
+                examPaper.classList.remove('hidden');
+
+            } catch (error) {
+                alert('حدث خطأ في الاتصال بالسيرفر الداخلي');
+                loading.classList.add('hidden');
+            }
+        }
+
+        // 🧠 دالة التحقق الذكية وحساب الدرجة وتلوين الإجابات
+        function checkAnswers() {
+            if (!currentExamData) return;
+
+            const language = document.getElementById('language').value;
+            let score = 0;
+            let totalQuestions = 0;
+
+            // 1. التحقق من الاختيارات من متعدد
+            if (currentExamData.multiple_choice) {
+                currentExamData.multiple_choice.forEach((q, qIndex) => {
+                    totalQuestions++;
+                    const selectedInput = document.querySelector(`input[name="mcq-${qIndex}"]:checked`);
+                    const optionsLabels = document.querySelectorAll(`input[name="mcq-${qIndex}"]`);
+                    
+                    optionsLabels.forEach(input => {
+                        const parentLabel = input.parentElement;
+                        // إعادة تعيين الألوان الأصلية
+                        parentLabel.className = parentLabel.className.replace(/bg-.*|border-.*/g, 'bg-slate-50 border-slate-200');
+                        
+                        // تلوين الإجابة الصحيحة باللون الأخضر دائماً ليعرفها الطالب
+                        if (input.value === q.answer) {
+                            parentLabel.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+                        }
+                    });
+
+                    if (selectedInput) {
+                        if (selectedInput.value === q.answer) {
+                            score++;
+                        } else {
+                            // تلوين إجابة الطالب الخاطئة باللون الأحمر
+                            selectedInput.parentElement.className = selectedInput.parentElement.className.replace(/bg-.*|border-.*/g, '');
+                            selectedInput.parentElement.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-700');
+                        }
+                    }
+                });
+            }
+
+            // 2. التحقق من أسئلة صح أو خطأ
+            if (currentExamData.true_false) {
+                currentExamData.true_false.forEach((q, qIndex) => {
+                    totalQuestions++;
+                    const selectedInput = document.querySelector(`input[name="tf-${qIndex}"]:checked`);
+                    const optionsLabels = document.querySelectorAll(`input[name="tf-${qIndex}"]`);
+
+                    optionsLabels.forEach(input => {
+                        const parentLabel = input.parentElement;
+                        parentLabel.className = parentLabel.className.replace(/bg-.*|border-.*/g, 'bg-slate-50 border-slate-200');
+                        
+                        // تلوين الخيار الصحيح (سواء ترو أو فولس) بالأخضر
+                        if (input.value === String(q.answer)) {
+                            parentLabel.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+                        }
+                    });
+
+                    if (selectedInput) {
+                        if (selectedInput.value === String(q.answer)) {
+                            score++;
+                        } else {
+                            // تلوين الخيار الخاطئ الذي اختاره الطالب بالأحمر
+                            selectedInput.parentElement.className = selectedInput.parentElement.className.replace(/bg-.*|border-.*/g, '');
+                            selectedInput.parentElement.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-700');
+                        }
+                    }
+                });
+            }
+
+            // 3. عرض شريط النتيجة الإجمالي الفاخر
+            const resultBanner = document.getElementById('resultBanner');
+            resultBanner.classList.remove('hidden', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'text-white', 'text-slate-900');
+            
+            const percentage = (score / totalQuestions) * 100;
+            
+            if (language === 'en') {
+                resultBanner.innerHTML = `Your Score: ${score} / ${totalQuestions} (${percentage.toFixed(0)}%)`;
+            } else {
+                resultBanner.innerHTML = `نتيجتك النهائية هي: ${score} من أصل ${totalQuestions} (نسبة نجاح ${percentage.toFixed(0)}%)`;
+            }
+
+            // تلوين شريط النتيجة حسب النسبة المستحقة للنجاح
+            if (percentage >= 75) {
+                resultBanner.classList.add('bg-emerald-600', 'text-white');
+            } else if (percentage >= 50) {
+                resultBanner.classList.add('bg-amber-500', 'text-slate-950');
+            } else {
+                resultBanner.classList.add('bg-rose-600', 'text-white');
+            }
+
+            // النزول تلقائياً إلى شريط النتيجة ليراه الطالب فوراً
+            resultBanner.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
