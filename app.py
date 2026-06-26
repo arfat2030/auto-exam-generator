@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 import pdfplumber
