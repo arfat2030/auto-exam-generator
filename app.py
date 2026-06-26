@@ -105,6 +105,7 @@ async def generate_exam_endpoint(
     except Exception as e:
         print("[❌] خطأ داخلي:", str(e))
         raise HTTPException(status_code=500, detail=f"حدث خطأ في النظام الداخلي: {str(e)}")
-        @app.get("/")
+        
+@app.get("/")
 async def serve_frontend():
     return FileResponse("index.html")
