@@ -47,7 +47,6 @@
                 <span class="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">⚡</span> تهيئة الاختبار التفاعلي الجديد
             </h2>
             
-            <!-- 🎯 تم تعديل الـ Grid هنا ليستوعب 4 خيارات متجاوبة بجانب بعضها -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
                 <div>
                     <label class="text-xs font-black text-slate-400 tracking-wider">🌐 لغة الاختبار</label>
@@ -66,15 +65,16 @@
                     </select>
                 </div>
 
-                <!-- ⏱️ خيار مدة الاختبار الجديد لتحديد وقت التحدي -->
                 <div>
                     <label class="text-xs font-black text-slate-400 tracking-wider">⏱️ مدة الاختبار</label>
                     <select id="examDuration" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="1">دقيقة واحدة (للتجربة) ⏱️</option>
                         <option value="5">5 دقائق</option>
+                        <option value="7">7 دقائق</option>
                         <option value="10">10 دقائق</option>
-                        <option value="30" selected>30 دقيقة (موصى به)</option>
-                        <option value="60">60 دقيقة</option>
+                        <option value="15">15 دقائق</option>
+                        <option value="20" selected>20 دقيقة (موصى به)</option>
+                        <option value="25">25 دقيقة</option>
                     </select>
                 </div>
 
@@ -114,10 +114,10 @@
             </div>
         </div>
 
-        <div id="examPaper" class="hidden bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-slate-900 border border-slate-200 mt-12 transition-all duration-700">
+        <div id="examPaper" class="hidden bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-slate-900 border border-slate-200 mt-12 transition-all duration-700 relative">
             
-            <!-- ⏳ شريط المؤقت الزمني الفاخر المضاف حديثاً في أول ورقة الاختبار -->
-            <div id="timerContainer" class="sticky top-4 z-50 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl flex justify-between items-center border border-slate-800 mb-8 transform transition-all duration-300">
+            <!-- ⏳ 🎯 تم تعديل هذا الجزء ليكون ثابت الخصائص (fixed) متمركزاً ومستقراً تماماً في أعلى الشاشة أثناء السحب -->
+            <div id="timerContainer" class="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl z-50 bg-slate-900/95 backdrop-blur-xl text-white px-6 py-3.5 rounded-2xl shadow-2xl flex justify-between items-center border border-slate-800 transition-all duration-300">
                 <div class="flex items-center gap-2">
                     <span id="timerIcon" class="animate-pulse text-rose-500 text-xl">⏳</span>
                     <span id="timerLabel" class="text-xs font-bold text-slate-400 uppercase tracking-wider">الوقت المتبقي للاختبار:</span>
@@ -127,7 +127,8 @@
                 </div>
             </div>
 
-            <div id="examHeader" class="text-center border-b-4 border-double border-slate-800 pb-6 mb-10"></div>
+            <!-- 🎯 أضفنا فئة pt-16 هنا لكي نترك مساحة أمان علوية تمنع تداخل العداد العائم مع ترويسة الاختبار الأصلية عند بداية الفتح -->
+            <div id="examHeader" class="text-center border-b-4 border-double border-slate-800 pb-6 mb-10 pt-16"></div>
             
             <div id="questionsContainer" class="space-y-12"></div>
 
@@ -146,7 +147,6 @@
     </main>
 
     <script>
-        // متغيرات عالمية لحفظ حاله وجدولة الاختبار والمؤقت الزمني
         let currentExamData = null;
         let timerInterval = null; 
 
@@ -195,22 +195,20 @@
                 currentExamData = data; 
                 questionsContainer.innerHTML = '';
 
-                // ضبط لغة الواجهة وعنونة شريط المؤقت والتحميل تلقائياً
                 if (language === 'en') {
                     examPaper.setAttribute('dir', 'ltr');
-                    examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-left";
+                    examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-left pt-16";
                     examHeader.innerHTML = `<h2 class="text-3xl font-black text-slate-900 tracking-tight">Interactive Online Test</h2><p class="text-xs text-slate-500 mt-2">Select your answers below and click verify.</p>`;
                     document.getElementById('timerLabel').innerText = "Time Remaining for Test:";
                     downloadWordBtn.innerText = "📝 Download Exam as Word (.docx)";
                 } else {
                     examPaper.setAttribute('dir', 'rtl');
-                    examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-right";
+                    examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-right pt-16";
                     examHeader.innerHTML = `<h2 class="text-3xl font-black text-slate-900 tracking-tight">الاختبار الإلكتروني التفاعلي</h2><p class="text-xs text-slate-500 mt-2">أجب عن الأسئلة بالضغط على الخيارات ثم اضغط على زر التحقق بالأسفل.</p>`;
                     document.getElementById('timerLabel').innerText = "الوقت المتبقي للاختبار:";
                     downloadWordBtn.innerText = "📝 تحميل الاختبار كملف Word (.docx)";
                 }
 
-                // 1. حقن أسئلة الاختيار من متعدد براديو بوتون تفاعلي
                 if (data.multiple_choice && data.multiple_choice.length > 0) {
                     let title = language === 'en' ? `Section 1: Multiple Choice Questions` : `القسم الأول: أسئلة الاختيار من متعدد`;
                     let mcqHTML = `<div class="mb-4"><h3 class="text-lg font-black pb-2 mb-5 text-indigo-700 border-b-2 border-slate-100">📌 ${title}</h3><div class="space-y-6">`;
@@ -233,7 +231,6 @@
                     questionsContainer.innerHTML += mcqHTML;
                 }
 
-                // 2. حقن أسئلة صح أو خطأ تفاعلية
                 if (data.true_false && data.true_false.length > 0) {
                     let title = language === 'en' ? `Section 2: True or False Questions` : `القسم الثاني: أسئلة صح أم خطأ`;
                     let tfHTML = `<div class="mb-4"><h3 class="text-lg font-bold pb-2 mb-5 text-indigo-700 border-b-2 border-slate-100">📌 ${title}</h3><div class="space-y-6">`;
@@ -258,7 +255,6 @@
                     questionsContainer.innerHTML += tfHTML;
                 }
 
-                // 3. قسم الأسئلة المقالية
                 if (data.essay && data.essay.length > 0) {
                     let title = language === 'en' ? `Section 3: Short Essay Questions (Self-Evaluation)` : `القسم الثالث: الأسئلة المقالية (تقييم ذاتي)`;
                     let essayHTML = `<div class="mb-4"><h3 class="text-lg font-bold pb-2 mb-5 text-indigo-700 border-b-2 border-slate-100">📌 ${title}</h3><ol class="list-decimal list-inside space-y-6">`;
@@ -276,7 +272,6 @@
                 examPaper.classList.remove('hidden');
                 downloadWordBtn.classList.remove('hidden'); 
 
-                // 🎯 تشغيل العداد التنازلي بناءً على الدقائق المحددة فور ظهور ورقة الأسئلة
                 const durationMinutes = parseInt(document.getElementById('examDuration').value);
                 startExamTimer(durationMinutes);
 
@@ -286,9 +281,7 @@
             }
         }
 
-        // 🧠 دالة التحقق الذكية وحساب الدرجة وتلوين الإجابات
         function checkAnswers() {
-            // 🎯 إيقاف العداد فوراً لأن الطالب قام بتسليم الإجابات يدوياً قبل نهاية الوقت
             if (timerInterval) clearInterval(timerInterval);
 
             if (!currentExamData) return;
@@ -297,7 +290,6 @@
             let score = 0;
             let totalQuestions = 0;
 
-            // 1. التحقق من الاختيارات من متعدد
             if (currentExamData.multiple_choice) {
                 currentExamData.multiple_choice.forEach((q, qIndex) => {
                     totalQuestions++;
@@ -324,7 +316,6 @@
                 });
             }
 
-            // 2. التحقق من أسئلة صح أو خطأ
             if (currentExamData.true_false) {
                 currentExamData.true_false.forEach((q, qIndex) => {
                     totalQuestions++;
@@ -351,7 +342,6 @@
                 });
             }
 
-            // 3. عرض شريط النتيجة الإجمالي الفاخر
             const resultBanner = document.getElementById('resultBanner');
             resultBanner.classList.remove('hidden', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'text-white', 'text-slate-900');
             
@@ -374,7 +364,6 @@
             resultBanner.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // 📝 دالة إرسال الطلب وحقن ملف الـ Word عبر البايثون في الذاكرة وتحميله فوراً
         async function downloadExamAsWord() {
             if (!currentExamData) {
                 alert(document.getElementById('language').value === 'en' ? "No exam data available to download." : "عذراً، لا توجد بيانات اختبار متاحة للتحميل حالياً.");
@@ -420,7 +409,6 @@
             }
         }
 
-        // ⏳ دالة إدارة العداد التنازلي المضافة لضبط وقت ورقة الامتحانات وسحبها تلقائياً
         function startExamTimer(minutes) {
             if (timerInterval) clearInterval(timerInterval);
 
@@ -437,20 +425,17 @@
 
                 clockDisplay.innerText = `${mins}:${secs}`;
 
-                // إذا بقيت دقيقة واحدة أو أقل، يتم تفعيل نبض تحذيري باللون الأحمر
                 if (timeRemaining <= 60) {
                     clockDisplay.className = "font-mono text-2xl font-black text-rose-500 animate-bounce";
                 } else {
                     clockDisplay.className = "font-mono text-2xl font-black text-indigo-400 tracking-widest";
                 }
 
-                // عند بلوغ الوقت صفر، يتم القفل التلقائي وحساب الدرجة فوراً
                 if (timeRemaining <= 0) {
                     clearInterval(timerInterval);
                     clockDisplay.innerText = isEn ? "00:00 - Time's up!" : "00:00 - انتهى الوقت!";
                     clockDisplay.className = "font-mono text-xl font-black text-rose-600 animate-pulse";
                     
-                    // تعطيل كافة حقول الراديو والتكست لإنهاء دورة التعديل
                     const allInputs = document.querySelectorAll('#questionsContainer input, #questionsContainer textarea');
                     allInputs.forEach(input => input.disabled = true);
                     
