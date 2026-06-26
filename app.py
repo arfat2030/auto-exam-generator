@@ -2,6 +2,7 @@ from fastapi.responses import FileResponse
 import os
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
 import pdfplumber
 import docx
 import json
@@ -13,13 +14,19 @@ app = FastAPI(title="Auto Exam Generator API - V3")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,  # 🎯 تم تحويلها إلى False لحل التعارض الأمني
+    allow_credentials=False, 
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY)
+
+REQUESTS_TRACKER = {}
+
+# الإعدادات الأمنية: 3 طلبات كحد أقصى خلال 60 ثانية
+MAX_REQUESTS = 3
+TIME_WINDOW = 60
 
 def extract_text_from_pdf(file_object):
     full_text = ""
@@ -77,13 +84,52 @@ def generate_questions(text_content, difficulty, num_mcq, num_tf, num_essay, lan
 
 @app.post("/generate-exam")
 async def generate_exam_endpoint(
+    request: Request,
     file: UploadFile = File(...),
     difficulty: str = Form(...),
     num_mcq: int = Form(...),
     num_tf: int = Form(...),
     num_essay: int = Form(...),
-    language: str = Form(...) # استقبال اللغة من الواجهة
+    language: str = Form(...) 
 ):
+    client_ip = request.client.host 
+    current_time = time.time() 
+    
+    
+    if client_ip in REQUESTS_TRACKER:
+        
+        REQUESTS_TRACKER[client_ip] = [
+            t for t in REQUESTS_TRACKER[client_ip] if current_time - t < TIME_WINDOW
+        ]
+
+        if len(REQUESTS_TRACKER[client_ip]) >= MAX_REQUESTS:
+            raise HTTPException(
+                status_code=429, 
+                detail=" !لقد تجاوزت الحد المسموح للطلبات. انتظر دقيقة ثم حاول مجدداً"
+            )
+
+        REQUESTS_TRACKER[client_ip].append(current_time)
+    else:
+        REQUESTS_TRACKER[client_ip] = [current_time]
+    ALLOWED_EXTENSIONS = ('.pdf', '.docx')
+    if not file.filename.lower().endswith(ALLOWED_EXTENSIONS):
+        raise HTTPException(
+            status_code=400, 
+            detail="عذراً، النظام يقبل ملفات PDF وملفات Word (.docx) فقط."
+        )
+
+    MAX_FILE_SIZE = 10 * 1024 * 1024  
+    
+    file_contents = await file.read()
+    file_size = len(file_contents)
+    
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400, 
+            detail="الملف ضخم جداً! لأسباب أمنية وحفاظاً على موارد السيرفر، الحد الأقصى المسموح به هو 10 ميجابايت."
+        )
+        
+    await file.seek(0)
     file_extension = file.filename.split(".")[-1].lower()
     if file_extension not in ["pdf", "docx"]:
         raise HTTPException(status_code=400, detail="عذراً، يجب رفع ملف PDF أو Word فقط.")
@@ -98,7 +144,7 @@ async def generate_exam_endpoint(
         if not text.strip():
             raise HTTPException(status_code=400, detail="الملف المرفوع فارغ.")
             
-        # تمرير اللغة المحددة للدالة
+        
         exam_json = generate_questions(text, difficulty, num_mcq, num_tf, num_essay, language)
         return exam_json
         
