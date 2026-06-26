@@ -70,11 +70,9 @@
                     <select id="examDuration" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="1">دقيقة واحدة (للتجربة) ⏱️</option>
                         <option value="5">5 دقائق</option>
-                        <option value="7">7 دقائق</option>
                         <option value="10">10 دقائق</option>
-                        <option value="15">15 دقائق</option>
-                        <option value="20" selected>20 دقيقة (موصى به)</option>
-                        <option value="25">25 دقيقة</option>
+                        <option value="30" selected>30 دقيقة (موصى به)</option>
+                        <option value="60">60 دقيقة</option>
                     </select>
                 </div>
 
@@ -116,7 +114,6 @@
 
         <div id="examPaper" class="hidden bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-slate-900 border border-slate-200 mt-12 transition-all duration-700 relative">
             
-            <!-- ⏳ 🎯 تم تعديل هذا الجزء ليكون ثابت الخصائص (fixed) متمركزاً ومستقراً تماماً في أعلى الشاشة أثناء السحب -->
             <div id="timerContainer" class="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl z-50 bg-slate-900/95 backdrop-blur-xl text-white px-6 py-3.5 rounded-2xl shadow-2xl flex justify-between items-center border border-slate-800 transition-all duration-300">
                 <div class="flex items-center gap-2">
                     <span id="timerIcon" class="animate-pulse text-rose-500 text-xl">⏳</span>
@@ -127,7 +124,6 @@
                 </div>
             </div>
 
-            <!-- 🎯 أضفنا فئة pt-16 هنا لكي نترك مساحة أمان علوية تمنع تداخل العداد العائم مع ترويسة الاختبار الأصلية عند بداية الفتح -->
             <div id="examHeader" class="text-center border-b-4 border-double border-slate-800 pb-6 mb-10 pt-16"></div>
             
             <div id="questionsContainer" class="space-y-12"></div>
@@ -142,7 +138,42 @@
                 </button>
             </div>
             
-            <div id="resultBanner" class="hidden w-full text-center p-6 rounded-2xl font-black text-2xl transition-all duration-500 mt-6"></div>
+            <!-- 🎯 حاوية لوحة تحليلات النتيجة الموسعة والمحدثة بالكامل بـ Progress Bars والتوجيهات -->
+            <div id="resultBanner" class="hidden w-full p-6 md:p-8 rounded-2xl font-bold border mt-8 transition-all duration-500">
+                <div id="scoreText" class="text-center font-black text-2xl md:text-3xl mb-6"></div>
+                
+                <!-- لوحة التفصيل والرسومات البيانية المصغرة -->
+                <div id="analyticsDashboard" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 border border-slate-200 p-5 rounded-2xl text-slate-800 text-sm font-medium">
+                    <div class="space-y-4">
+                        <h4 class="font-black text-slate-900 border-b pb-2 flex items-center gap-2">📊 تحليل الأقسام:</h4>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1 font-bold text-xs text-slate-600">
+                                <span id="mcqLabel">أسئلة الاختيار من متعدد:</span>
+                                <span id="mcqPercent">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div id="mcqBar" class="bg-indigo-600 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-1 font-bold text-xs text-slate-600">
+                                <span id="tfLabel">أسئلة صح أم خطأ:</span>
+                                <span id="tfPercent">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div id="tfBar" class="bg-purple-600 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col justify-between">
+                        <h4 class="font-black text-slate-900 border-b pb-2 flex items-center gap-2">💡 التوجيه والملاحظات الأكاديمية:</h4>
+                        <p id="aiFeedback" class="text-slate-600 text-xs leading-relaxed mt-2 italic bg-white p-3 rounded-xl border border-slate-100 flex-1 flex items-center"></p>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -281,17 +312,23 @@
             }
         }
 
+        // 🧠 دالة التحقق وحساب النتيجة الموسعة بنظام التحليلات المتقدم
         function checkAnswers() {
             if (timerInterval) clearInterval(timerInterval);
 
             if (!currentExamData) return;
 
             const language = document.getElementById('language').value;
-            let score = 0;
+            
+            let mcqCorrect = 0, mcqTotal = 0;
+            let tfCorrect = 0, tfTotal = 0;
+            let totalScore = 0;
             let totalQuestions = 0;
 
+            // 1. التحقق من الاختيارات من متعدد وحساب أرقامها التحليلية
             if (currentExamData.multiple_choice) {
                 currentExamData.multiple_choice.forEach((q, qIndex) => {
+                    mcqTotal++;
                     totalQuestions++;
                     const selectedInput = document.querySelector(`input[name="mcq-${qIndex}"]:checked`);
                     const optionsLabels = document.querySelectorAll(`input[name="mcq-${qIndex}"]`);
@@ -299,7 +336,6 @@
                     optionsLabels.forEach(input => {
                         const parentLabel = input.parentElement;
                         parentLabel.className = parentLabel.className.replace(/bg-.*|border-.*/g, 'bg-slate-50 border-slate-200');
-                        
                         if (input.value === q.answer) {
                             parentLabel.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
                         }
@@ -307,7 +343,8 @@
 
                     if (selectedInput) {
                         if (selectedInput.value === q.answer) {
-                            score++;
+                            mcqCorrect++;
+                            totalScore++;
                         } else {
                             selectedInput.parentElement.className = selectedInput.parentElement.className.replace(/bg-.*|border-.*/g, '');
                             selectedInput.parentElement.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-700');
@@ -316,8 +353,10 @@
                 });
             }
 
+            // 2. التحقق من أسئلة صح أو خطأ وحساب أرقامها التحليلية
             if (currentExamData.true_false) {
                 currentExamData.true_false.forEach((q, qIndex) => {
+                    tfTotal++;
                     totalQuestions++;
                     const selectedInput = document.querySelector(`input[name="tf-${qIndex}"]:checked`);
                     const optionsLabels = document.querySelectorAll(`input[name="tf-${qIndex}"]`);
@@ -325,7 +364,6 @@
                     optionsLabels.forEach(input => {
                         const parentLabel = input.parentElement;
                         parentLabel.className = parentLabel.className.replace(/bg-.*|border-.*/g, 'bg-slate-50 border-slate-200');
-                        
                         if (input.value === String(q.answer)) {
                             parentLabel.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
                         }
@@ -333,7 +371,8 @@
 
                     if (selectedInput) {
                         if (selectedInput.value === String(q.answer)) {
-                            score++;
+                            tfCorrect++;
+                            totalScore++;
                         } else {
                             selectedInput.parentElement.className = selectedInput.parentElement.className.replace(/bg-.*|border-.*/g, '');
                             selectedInput.parentElement.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-700');
@@ -342,23 +381,57 @@
                 });
             }
 
+            // 3. تفعيل الحاوية الإجمالية
             const resultBanner = document.getElementById('resultBanner');
-            resultBanner.classList.remove('hidden', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'text-white', 'text-slate-900');
+            const scoreText = document.getElementById('scoreText');
             
-            const percentage = (score / totalQuestions) * 100;
+            resultBanner.classList.remove('hidden', 'bg-emerald-500/10', 'bg-rose-500/10', 'bg-amber-500/10', 'border-emerald-500/30', 'border-rose-500/30', 'border-amber-500/30', 'text-emerald-400', 'text-rose-400', 'text-amber-400');
             
+            const percentage = (totalScore / totalQuestions) * 100;
+            
+            // ضبط لغة التقييم الرقمي الرئيسي
             if (language === 'en') {
-                resultBanner.innerHTML = `Your Score: ${score} / ${totalQuestions} (${percentage.toFixed(0)}%)`;
+                scoreText.innerHTML = `🏁 Your Score: ${totalScore} / ${totalQuestions} (${percentage.toFixed(0)}%)`;
+                document.getElementById('mcqLabel').innerText = "Multiple Choice Section:";
+                document.getElementById('tfLabel').innerText = "True or False Section:";
             } else {
-                resultBanner.innerHTML = `نتيجتك النهائية هي: ${score} من أصل ${totalQuestions} (نسبة نجاح ${percentage.toFixed(0)}%)`;
+                scoreText.innerHTML = `🏁 نتيجتك النهائية هي: ${totalScore} من أصل ${totalQuestions} (نسبة نجاح ${percentage.toFixed(0)}%)`;
+                document.getElementById('mcqLabel').innerText = "قسم أسئلة الاختيار من متعدد:";
+                document.getElementById('tfLabel').innerText = "قسم أسئلة صح أم خطأ:";
             }
 
-            if (percentage >= 75) {
-                resultBanner.classList.add('bg-emerald-600', 'text-white');
-            } else if (percentage >= 50) {
-                resultBanner.classList.add('bg-amber-500', 'text-slate-950');
+            // حساب النسب المئوية للأقسام وتغذية الـ Progress Bars
+            const mcqRatio = mcqTotal > 0 ? (mcqCorrect / mcqTotal) * 100 : 0;
+            const tfRatio = tfTotal > 0 ? (tfCorrect / tfTotal) * 100 : 0;
+
+            document.getElementById('mcqPercent').innerText = `${mcqRatio.toFixed(0)}%`;
+            document.getElementById('mcqBar').style.width = `${mcqRatio}%`;
+            
+            document.getElementById('tfPercent').innerText = `${tfRatio.toFixed(0)}%`;
+            document.getElementById('tfBar').style.width = `${tfRatio}%`;
+
+            // خوارزمية صياغة النص التوجيهي الذكي للطالب بناء على أدائه
+            let feedback = "";
+            if (language === 'en') {
+                if (percentage >= 85) feedback = "🎯 Outstanding performance! You have fully mastered this curriculum chunk. Keep up the brilliant work!";
+                else if (mcqRatio < tfRatio) feedback = "💡 Tip: Focus more on conceptual understanding and depth. Your analytical multiple-choice skills need a bit more review.";
+                else if (tfRatio < mcqRatio) feedback = "💡 Tip: Pay attention to absolute facts and key terminology. Your precision in True/False statements can be improved.";
+                else feedback = "📚 Good effort! A balanced distribution. Review the wrong answers to fill in the missing knowledge gaps.";
             } else {
-                resultBanner.classList.add('bg-rose-600', 'text-white');
+                if (percentage >= 85) feedback = "🎯 أداء أسطوري ومبهر! لقد استوعبت المنهج بشكل كامل وممتاز، استمر في هذا المستوى العالي!";
+                else if (mcqRatio < tfRatio) feedback = "💡 نصيحة موجهة: أداؤك ممتاز في الحفظ، ولكن تحتاج للتركيز أكثر على الفهم العميق والربط التحليلي لأن قسم الاختيارات يحتاج منك مراجعة إضافية.";
+                else if (tfRatio < mcqRatio) feedback = "💡 نصيحة موجهة: قدرتك التحليلية رائعة، لكن احرص على التدقيق في المصطلحات والعبارات الصريحة، حيث تراجعت دقة إجاباتك في قسم (صح أم خطأ).";
+                else feedback = "📚 جهد طيب ومتوازن! ننصحك بفتح المستند مجدداً وإلقاء نظرة سريعة على الأسئلة الملونة بالأحمر لضمان سد الثغرات المعرفية.";
+            }
+            document.getElementById('aiFeedback').innerText = feedback;
+
+            // تلوين إطار اللوحة الكلي حسب الأداء
+            if (percentage >= 75) {
+                resultBanner.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-400');
+            } else if (percentage >= 50) {
+                resultBanner.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-400');
+            } else {
+                resultBanner.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-400');
             }
 
             resultBanner.scrollIntoView({ behavior: 'smooth' });
