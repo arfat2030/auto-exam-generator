@@ -4,3 +4,4 @@ pdfplumber
 python-docx
 google-genai
 python-multipart
+python-docx
