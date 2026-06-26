@@ -47,7 +47,8 @@
                 <span class="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">⚡</span> تهيئة الاختبار التفاعلي الجديد
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- 🎯 تم تعديل الـ Grid هنا ليستوعب 4 خيارات متجاوبة بجانب بعضها -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
                 <div>
                     <label class="text-xs font-black text-slate-400 tracking-wider">🌐 لغة الاختبار</label>
                     <select id="language" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -57,11 +58,23 @@
                 </div>
 
                 <div>
-                    <label class="text-xs font-black text-slate-400 tracking-wider">📊 مستوى الصعوبة والتحدي</label>
+                    <label class="text-xs font-black text-slate-400 tracking-wider">📊 مستوى الصعوبة</label>
                     <select id="difficulty" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="سهل ومباشر">سهل / مباشر</option>
                         <option value="متوسط وقائم على الفهم" selected>متوسط / تحليلي</option>
                         <option value="صعب ومتقدم يقيس التفكير النقدي">صعب / تفكير نقدي</option>
+                    </select>
+                </div>
+
+                <!-- ⏱️ خيار مدة الاختبار الجديد لتحديد وقت التحدي -->
+                <div>
+                    <label class="text-xs font-black text-slate-400 tracking-wider">⏱️ مدة الاختبار</label>
+                    <select id="examDuration" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="1">دقيقة واحدة (للتجربة) ⏱️</option>
+                        <option value="5">5 دقائق</option>
+                        <option value="10">10 دقائق</option>
+                        <option value="30" selected>30 دقيقة (موصى به)</option>
+                        <option value="60">60 دقيقة</option>
                     </select>
                 </div>
 
@@ -102,11 +115,22 @@
         </div>
 
         <div id="examPaper" class="hidden bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-slate-900 border border-slate-200 mt-12 transition-all duration-700">
+            
+            <!-- ⏳ شريط المؤقت الزمني الفاخر المضاف حديثاً في أول ورقة الاختبار -->
+            <div id="timerContainer" class="sticky top-4 z-50 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl flex justify-between items-center border border-slate-800 mb-8 transform transition-all duration-300">
+                <div class="flex items-center gap-2">
+                    <span id="timerIcon" class="animate-pulse text-rose-500 text-xl">⏳</span>
+                    <span id="timerLabel" class="text-xs font-bold text-slate-400 uppercase tracking-wider">الوقت المتبقي للاختبار:</span>
+                </div>
+                <div id="countdownClock" class="font-mono text-2xl font-black text-indigo-400 tracking-widest">
+                    00:00
+                </div>
+            </div>
+
             <div id="examHeader" class="text-center border-b-4 border-double border-slate-800 pb-6 mb-10"></div>
             
             <div id="questionsContainer" class="space-y-12"></div>
 
-            <!-- 🎯 تم تعديل الحاوية هنا باستخدام Tailwind لتصبح متجاوبة وتدعم الزر الجديد بجانب زر التحقق -->
             <div class="border-t-2 border-slate-100 pt-8 mt-12 flex flex-col md:flex-row items-center justify-center gap-4">
                 <button onclick="checkAnswers()" id="submitExamBtn" class="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black px-10 py-4 rounded-2xl shadow-lg cursor-pointer transition-all transform hover:-translate-y-0.5 text-lg">
                     📊 تحقق من إجاباتك واحسب النتيجة
@@ -122,8 +146,9 @@
     </main>
 
     <script>
-        // متغير عالمي لحفظ بيانات الأسئلة والإجابات الصحيحة القادمة من السيرفر
+        // متغيرات عالمية لحفظ حاله وجدولة الاختبار والمؤقت الزمني
         let currentExamData = null;
+        let timerInterval = null; 
 
         async function uploadAndGenerate() {
             const fileInput = document.getElementById('fileInput');
@@ -148,7 +173,7 @@
             loading.classList.remove('hidden');
             examPaper.classList.add('hidden');
             resultBanner.classList.add('hidden');
-            downloadWordBtn.classList.add('hidden'); // إخفاء زر التحميل عند البدء بطلب جديد لحين جاهزية البيانات
+            downloadWordBtn.classList.add('hidden'); 
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -167,19 +192,21 @@
                 if (!response.ok) throw new Error('Error');
 
                 const data = await response.json();
-                currentExamData = data; // تخزين البيانات للتحقق لاحقاً
+                currentExamData = data; 
                 questionsContainer.innerHTML = '';
 
-                // ضبط اللغة والترويسية وعنونة زر التحميل تلقائياً
+                // ضبط لغة الواجهة وعنونة شريط المؤقت والتحميل تلقائياً
                 if (language === 'en') {
                     examPaper.setAttribute('dir', 'ltr');
                     examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-left";
                     examHeader.innerHTML = `<h2 class="text-3xl font-black text-slate-900 tracking-tight">Interactive Online Test</h2><p class="text-xs text-slate-500 mt-2">Select your answers below and click verify.</p>`;
+                    document.getElementById('timerLabel').innerText = "Time Remaining for Test:";
                     downloadWordBtn.innerText = "📝 Download Exam as Word (.docx)";
                 } else {
                     examPaper.setAttribute('dir', 'rtl');
                     examHeader.className = "text-center border-b-4 border-double border-slate-800 pb-6 mb-10 text-right";
                     examHeader.innerHTML = `<h2 class="text-3xl font-black text-slate-900 tracking-tight">الاختبار الإلكتروني التفاعلي</h2><p class="text-xs text-slate-500 mt-2">أجب عن الأسئلة بالضغط على الخيارات ثم اضغط على زر التحقق بالأسفل.</p>`;
+                    document.getElementById('timerLabel').innerText = "الوقت المتبقي للاختبار:";
                     downloadWordBtn.innerText = "📝 تحميل الاختبار كملف Word (.docx)";
                 }
 
@@ -247,7 +274,11 @@
 
                 loading.classList.add('hidden');
                 examPaper.classList.remove('hidden');
-                downloadWordBtn.classList.remove('hidden'); // إظهار زر تحميل مستند الـ Word فور عرض ورقة الأسئلة بنجاح
+                downloadWordBtn.classList.remove('hidden'); 
+
+                // 🎯 تشغيل العداد التنازلي بناءً على الدقائق المحددة فور ظهور ورقة الأسئلة
+                const durationMinutes = parseInt(document.getElementById('examDuration').value);
+                startExamTimer(durationMinutes);
 
             } catch (error) {
                 alert('حدث خطأ في الاتصال بالسيرفر الداخلي');
@@ -257,6 +288,9 @@
 
         // 🧠 دالة التحقق الذكية وحساب الدرجة وتلوين الإجابات
         function checkAnswers() {
+            // 🎯 إيقاف العداد فوراً لأن الطالب قام بتسليم الإجابات يدوياً قبل نهاية الوقت
+            if (timerInterval) clearInterval(timerInterval);
+
             if (!currentExamData) return;
 
             const language = document.getElementById('language').value;
@@ -384,6 +418,48 @@
                 downloadWordBtn.innerText = originalText;
                 downloadWordBtn.style.opacity = "1";
             }
+        }
+
+        // ⏳ دالة إدارة العداد التنازلي المضافة لضبط وقت ورقة الامتحانات وسحبها تلقائياً
+        function startExamTimer(minutes) {
+            if (timerInterval) clearInterval(timerInterval);
+
+            let timeRemaining = minutes * 60; 
+            const clockDisplay = document.getElementById('countdownClock');
+            const isEn = document.getElementById('language').value === 'en';
+
+            timerInterval = setInterval(() => {
+                let mins = Math.floor(timeRemaining / 60);
+                let secs = timeRemaining % 60;
+
+                mins = mins < 10 ? '0' + mins : mins;
+                secs = secs < 10 ? '0' + secs : secs;
+
+                clockDisplay.innerText = `${mins}:${secs}`;
+
+                // إذا بقيت دقيقة واحدة أو أقل، يتم تفعيل نبض تحذيري باللون الأحمر
+                if (timeRemaining <= 60) {
+                    clockDisplay.className = "font-mono text-2xl font-black text-rose-500 animate-bounce";
+                } else {
+                    clockDisplay.className = "font-mono text-2xl font-black text-indigo-400 tracking-widest";
+                }
+
+                // عند بلوغ الوقت صفر، يتم القفل التلقائي وحساب الدرجة فوراً
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    clockDisplay.innerText = isEn ? "00:00 - Time's up!" : "00:00 - انتهى الوقت!";
+                    clockDisplay.className = "font-mono text-xl font-black text-rose-600 animate-pulse";
+                    
+                    // تعطيل كافة حقول الراديو والتكست لإنهاء دورة التعديل
+                    const allInputs = document.querySelectorAll('#questionsContainer input, #questionsContainer textarea');
+                    allInputs.forEach(input => input.disabled = true);
+                    
+                    alert(isEn ? "Time is up! Your exam has been submitted automatically." : "انتهى وقت الاختبار تماماً! تم سحب ورقة الإجابة وحساب درجتك تلقائياً.");
+                    checkAnswers();
+                }
+
+                timeRemaining--;
+            }, 1000);
         }
     </script>
 </body>
