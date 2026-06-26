@@ -12,7 +12,7 @@ app = FastAPI(title="Auto Exam Generator API - V3")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # 🎯 تم تحويلها إلى False لحل التعارض الأمني
     allow_methods=["*"],
     allow_headers=["*"],
 )
