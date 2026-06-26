@@ -151,11 +151,11 @@
             formData.append('num_essay', numEssay);
             formData.append('language', language);
 
-            try {
-                const response = await fetch('http://127.0.0.1:8000/generate-exam', {
-                    method: 'POST',
-                    body: formData
-                });
+           try {
+    const response = await fetch('https://interactive-exam-backend.onrender.com/generate-exam', {
+        method: 'POST',
+        body: formData
+    });
 
                 if (!response.ok) throw new Error('Error');
 
