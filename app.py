@@ -4,6 +4,10 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
 import pdfplumber
+from fastapi.responses import StreamingResponse
+from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 import docx
 import json
 from google import genai
@@ -155,3 +159,77 @@ async def generate_exam_endpoint(
 @app.get("/")
 async def serve_frontend():
     return FileResponse("index.html")
+
+@app.post("/export-exam")
+async def export_exam_to_docx(exam_data: dict):
+    #  إنشاء مستند Word جديد في الذاكرة
+    doc = Document()
+    
+    # 📝 ضبط اتجاه الصفحة ليدعم اللغة العربية (من اليمين إلى اليسار)
+    # ملاحظة: ملفات الـ Word تحتاج تنسيقاً أساسياً للفقرات
+    sections = doc.sections
+    for section in sections:
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+
+    #  1. بناء ترويسة الاختبار الأكاديمية (Header)
+    title = doc.add_paragraph()
+    title_run = title.add_run("جامعة: ............................\nالكلية: ............................\nالقسم: ............................")
+    title_run.font.name = 'Arial'
+    title_run.font.size = Pt(12)
+    title_run.bold = True
+    title.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+    # 📄 عنوان المادة والامتحان في المنتصف
+    header_exam = doc.add_paragraph()
+    header_run = header_exam.add_run("\nإمتحان المادة التفاعلي النهائي\nالزمن: ساعتان\n")
+    header_run.font.name = 'Arial'
+    header_run.font.size = Pt(14)
+    header_run.bold = True
+    header_exam.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    #  سطر بيانات الطالب
+    student_info = doc.add_paragraph()
+    student_run = student_info.add_run("اسم الطالب: ............................................................  الرقم الأكاديمي: .............................")
+    student_run.font.name = 'Arial'
+    student_run.font.size = Pt(11)
+    student_info.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    doc.add_paragraph("------------------------------------------------------------------------------------------------------------------------")
+
+    #  2. قراءة الأسئلة من الـ JSON وكتابتها داخل الملف
+    questions = exam_data.get("questions", [])
+    
+    for index, q in enumerate(questions, 1):
+        q_type = q.get("type", "")
+        q_text = q.get("question", "")
+        
+        # كتابة نص السؤال
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        run = p.add_run(f"س {index}: {q_text}")
+        run.font.name = 'Arial'
+        run.font.size = Pt(12)
+        run.bold = True
+        
+        if q_type == "mcq" and "options" in q:
+            for opt_key, opt_val in q["options"].items():
+                opt_p = doc.add_paragraph()
+                opt_p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                opt_run = opt_p.add_run(f"   {opt_key}) {opt_val}")
+                opt_run.font.name = 'Arial'
+                opt_run.font.size = Pt(11)
+                
+        elif q_type == "essay":
+            doc.add_paragraph("\nالإجابة:\n........................................................................................................................\n........................................................................................................................") 
+    file_stream = io.BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+    
+    #  إرسال الملف فوراً للمتصفح ليتم تحميله باسم رسمي تلقائي
+    return StreamingResponse(
+        file_stream,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": "attachment; filename=Generated_Exam.docx"}
+    )
