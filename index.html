@@ -38,7 +38,7 @@
                 <p class="text-xs text-indigo-400 font-bold tracking-widest uppercase mt-1">نظام الاختبارات التفاعلية الفورية بالذكاء الاصطناعي</p>
             </div>
         </div>
-        <!-- 🔐 زر بوابة الإدارة والتحكم السرية للمشرفين -->
+        <!-- 🔐 بوابة الآدمن والمشرفين السرية المحدثة لعزل البيانات -->
         <div class="mt-4 md:mt-0 relative z-20">
             <button onclick="toggleAdminMode()" id="adminNavBtn" class="bg-slate-900/80 hover:bg-indigo-950 border border-slate-800 text-slate-300 font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all">
                 🔓 بوابة المشرف
@@ -71,7 +71,7 @@
                     </select>
                 </div>
 
-                <div>
+               <div>
                     <label class="text-xs font-black text-slate-400 tracking-wider">⏱️ مدة الاختبار</label>
                     <select id="examDuration" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="1">دقيقة واحدة (للتجربة) ⏱️</option>
@@ -119,7 +119,7 @@
             </div>
         </div>
 
-        <!-- 🔒 لوحة الأرشيف الإداري الحساسة: تبدأ مخفية ومغلقة برمز أمني مخصص للآدمن -->
+        <!-- 🔒 لوحة أرشيف قاعدة البيانات الحساسة المحمية بكلمة المرور -->
         <div id="historyCard" class="hidden bg-slate-900/40 backdrop-blur-2xl rounded-3xl border border-slate-800 p-6 md:p-8 mt-8 transition-all duration-500">
             <h3 class="text-sm font-black text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                 🗄️ سجل آخر الاختبارات الموثقة في السيرفر (خاص بالإدارة)
@@ -135,7 +135,7 @@
                         </tr>
                     </thead>
                     <tbody id="historyTableBody" class="text-slate-300 font-medium divide-y divide-slate-900">
-                        <!-- البيانات تسحب ديناميكياً بكلمة السر -->
+                        <!-- حقن البيانات المؤمنة ههنا -->
                     </tbody>
                 </table>
             </div>
@@ -143,7 +143,7 @@
 
         <div id="examPaper" class="hidden bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-slate-900 border border-slate-200 mt-12 transition-all duration-700 relative">
             
-            <!-- ⏳ شريط المؤقت الرقمي الثابت الحوسبي العائم في الأعلى -->
+            <!-- ⏳ شريط المؤقت الرقمي الثابت العائم باحترافية تامة علوياً -->
             <div id="timerContainer" class="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl z-50 bg-slate-900/95 backdrop-blur-xl text-white px-6 py-3.5 rounded-2xl shadow-2xl flex justify-between items-center border border-slate-800 transition-all duration-300">
                 <div class="flex items-center gap-2">
                     <span id="timerIcon" class="animate-pulse text-rose-500 text-xl">⏳</span>
@@ -172,7 +172,7 @@
                 </button>
             </div>
             
-            <!-- 📊 شريط النتيجة الإجمالي مع لوحة تحليلات الـ Progress Bars المتقدمة والتوجيه الذكي -->
+            <!-- 📊 حاوية التحليلات الرقمية وتوجيه الطالب بـ Progress Bars -->
             <div id="resultBanner" class="hidden w-full p-6 md:p-8 rounded-2xl font-bold border mt-8 transition-all duration-500">
                 <div id="scoreText" class="text-center font-black text-2xl md:text-3xl mb-6"></div>
                 
@@ -213,7 +213,7 @@
         let uploadedFileName = ""; 
         let adminToken = localStorage.getItem('admin_token') || "";
 
-        // كشف الأرشيف السري تلقائياً فور التحميل إذا كان الآدمن مسجلاً مسبقاً
+        // فك قفل السجلات المحمية تلقائياً إذا كان المشرف مسجلاً مسبقاً لجلسة المتصفح
         window.addEventListener('DOMContentLoaded', () => {
             if (adminToken) {
                 document.getElementById('historyCard').classList.remove('hidden');
@@ -223,7 +223,6 @@
             }
         });
 
-        // آلية تسجيل وإغلاق بوابة المشرفين
         function toggleAdminMode() {
             const historyCard = document.getElementById('historyCard');
             const adminBtn = document.getElementById('adminNavBtn');
@@ -246,7 +245,14 @@
         async function loadExamsHistory() {
             if (!adminToken) return;
             try {
-                const response = await fetch(`/get-exams-history?token=${encodeURIComponent(adminToken)}`);
+                // 🛡️ التطوير الأمني الفخم: تمرير توكن الحماية داخل ترويسة الطلب المخفية عن السجلات العلنية
+                const response = await fetch('/get-exams-history', {
+                    method: 'GET',
+                    headers: {
+                        'X-Admin-Token': adminToken
+                    }
+                });
+                
                 if (!response.ok) {
                     if (response.status === 401) {
                         alert("❌ كلمة السر خاطئة! لا تملك صلاحية مشرف.");
@@ -516,7 +522,7 @@
 
             resultBanner.scrollIntoView({ behavior: 'smooth' });
 
-            // توثيق النتيجة فوراً في سجل قاعدة البيانات
+            // توثيق النتيجة فوراً في سجل قاعدة البيانات في الخلفية
             saveExamResultToDatabase(uploadedFileName, difficulty, language, totalScore, totalQuestions, percentage);
         }
 
@@ -527,7 +533,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ filename, difficulty, language, score, total_questions: total, percentage: percent })
                 });
-                if (adminToken) loadExamsHistory(); // تحديث السجل تلقائياً للآدمن
+                if (adminToken) loadExamsHistory(); 
             } catch (err) { console.error(err); }
         }
 
