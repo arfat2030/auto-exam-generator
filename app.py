@@ -13,6 +13,7 @@ import time  # 🧠 تم إضافة المكتبة هنا لحل مشكلة ان
 import io
 from google import genai
 from google.genai import types
+import sqlite3
 
 app = FastAPI(title="Auto Exam Generator API - V3")
 
@@ -28,6 +29,29 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 REQUESTS_TRACKER = {}
+
+def init_db():
+    conn = sqlite3.connect("exam_platform.db")
+    cursor = conn.cursor()
+    # إنشاء جدول حفظ السجلات والنتائج إذا لم يكن موجوداً مسبقاً
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS exam_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT,
+            difficulty TEXT,
+            language TEXT,
+            score INTEGER,
+            total_questions INTEGER,
+            percentage REAL,
+            timestamp TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# استدعاء الدالة فوراً لتجهيز قاعدة البيانات في السيرفر
+init_db()
+
 MAX_REQUESTS = 3
 TIME_WINDOW = 60
 
@@ -144,7 +168,69 @@ async def generate_exam_endpoint(
     except Exception as e:
         print("[❌] خطأ داخلي:", str(e))
         raise HTTPException(status_code=500, detail=f"حدث خطأ في النظام الداخلي: {str(e)}")
+
+@app.post("/save-exam-result")
+async def save_exam_result(data: dict):
+    """🧠 مسار استقبال النتيجة النهائية من الواجهة وحفظها في قاعدة البيانات"""
+    try:
+        conn = sqlite3.connect("exam_platform.db")
+        cursor = conn.cursor()
         
+        # حقن البيانات بأمان باستخدام بروتوكول منسق لمنع هجمات SQL Injection
+        cursor.execute("""
+            INSERT INTO exam_logs (filename, difficulty, language, score, total_questions, percentage, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data.get("filename", "مستند غير مسمى"),
+            data.get("difficulty", "غير محدد"),
+            data.get("language", "ar"),
+            data.get("score", 0),
+            data.get("total_questions", 0),
+            data.get("percentage", 0.0),
+            time.strftime("%Y-%m-%d %H:%M:%S") # توثيق الوقت والتاريخ الحالي للطلب
+        ))
+        
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "تم توثيق وحفظ النتيجة في السجل الأكاديمي بأمان."}
+    except Exception as e:
+        print("[❌] خطأ في قاعدة البيانات:", str(e))
+        raise HTTPException(status_code=500, detail=f"فشل حفظ النتيجة في قاعدة البيانات: {str(e)}")
+
+@app.get("/get-exams-history")
+async def get_exams_history():
+    """📊 مسار جلب سجل آخر 5 اختبارات تم توليدها لعرضها في لوحة التحكم"""
+    try:
+        conn = sqlite3.connect("exam_platform.db")
+        cursor = conn.cursor()
+        
+        # جلب آخر 5 اختبارات مرتبة من الأحدث إلى الأقدم
+        cursor.execute("""
+            SELECT filename, difficulty, language, score, total_questions, percentage, timestamp 
+            FROM exam_logs 
+            ORDER BY id DESC 
+            LIMIT 5
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # تحويل السطور المجلوبة إلى قائمة كائنات JSON مفهومة للمتصفح
+        history_list = []
+        for row in rows:
+            history_list.append({
+                "filename": row[0],
+                "difficulty": row[1],
+                "language": row[2],
+                "score": row[3],
+                "total_questions": row[4],
+                "percentage": row[5],
+                "timestamp": row[6]
+            })
+        return history_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"فشل جلب السجلات: {str(e)}")
+
+
 @app.get("/")
 async def serve_frontend():
     return FileResponse("index.html")
