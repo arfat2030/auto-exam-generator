@@ -197,14 +197,23 @@ async def save_exam_result(data: dict):
         print("[❌] خطأ في قاعدة البيانات:", str(e))
         raise HTTPException(status_code=500, detail=f"فشل حفظ النتيجة في قاعدة البيانات: {str(e)}")
 
+#  نحدد كلمة سر المشرف (يمكنك تغييرها من هنا أو من إعدادات سحابة Render)
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
 @app.get("/get-exams-history")
-async def get_exams_history():
-    """📊 مسار جلب سجل آخر 5 اختبارات تم توليدها لعرضها في لوحة التحكم"""
+async def get_exams_history(token: str = None): #  استقبال كلمة السر من الواجهة كـ Query Parameter
+    """📊 مسار جلب سجل الاختبارات - مؤمن ومخصص حصراً للآدمن"""
+    # خط الدفاع الأمني: فحص صلاحية كلمة السر قبل المساس بقاعدة البيانات
+    if token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=401, 
+            detail="عذراً، أنت غير مصرح لك بالوصول إلى الأرشيف الأكاديمي."
+        )
+        
     try:
         conn = sqlite3.connect("exam_platform.db")
         cursor = conn.cursor()
         
-        # جلب آخر 5 اختبارات مرتبة من الأحدث إلى الأقدم
         cursor.execute("""
             SELECT filename, difficulty, language, score, total_questions, percentage, timestamp 
             FROM exam_logs 
@@ -214,7 +223,6 @@ async def get_exams_history():
         rows = cursor.fetchall()
         conn.close()
         
-        # تحويل السطور المجلوبة إلى قائمة كائنات JSON مفهومة للمتصفح
         history_list = []
         for row in rows:
             history_list.append({
